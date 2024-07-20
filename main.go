@@ -18,8 +18,8 @@ package main
 
 import (
 	"github.com/sirupsen/logrus"
-	"github.com/vmware-tanzu/velero-plugin-example/internal/plugin"
 	"github.com/vmware-tanzu/velero/pkg/plugin/framework"
+	"github.com/wrkt/velero-custom-plugins/internal/plugin"
 )
 
 func main() {
