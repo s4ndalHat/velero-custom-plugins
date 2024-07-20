@@ -22,7 +22,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/vmware-tanzu/velero/pkg/plugin/velero"
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // RestorePlugin is a restore item action plugin for Velero
@@ -48,7 +48,7 @@ func (p *RestorePlugin) AppliesTo() (velero.ResourceSelector, error) {
 // in this case, setting a custom annotation on the item being restored.
 func (p *RestorePlugin) Execute(input *velero.RestoreItemActionExecuteInput) (*velero.RestoreItemActionExecuteOutput, error) {
 	p.log.Infof("Restoring item with GroupVersionKind: %s", input.Item.GetObjectKind().GroupVersionKind().String())
-	// Add logic here
+
 	jsonData, err := json.Marshal(input.Item)
 	if err != nil {
 		return nil, err
@@ -59,9 +59,9 @@ func (p *RestorePlugin) Execute(input *velero.RestoreItemActionExecuteInput) (*v
 	modifiedString := strings.ReplaceAll(string(jsonData), pattern, replacement)
 
 	// Create a new item from the modified JSON data
-	var modifiedObj runtime.Unstructured
+	var modifiedObj unstructured.Unstructured
 	if err := json.Unmarshal([]byte(modifiedString), &modifiedObj); err != nil {
 		return nil, err
 	}
-	return velero.NewRestoreItemActionExecuteOutput(input.Item), nil
+	return velero.NewRestoreItemActionExecuteOutput(&modifiedObj), nil
 }
