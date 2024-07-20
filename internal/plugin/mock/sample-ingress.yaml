@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: foo-production-app
+  labels:
+    env: production
+spec:
+  rules:
+  - host: logs.foo-production.example.com
+    http:
+      paths:
+      - path: /
+        backend:
+          service:
+            name: foo-production-svc
+            port:
+              number: 80

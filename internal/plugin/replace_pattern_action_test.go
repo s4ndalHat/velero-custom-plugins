@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"encoding/json"
+	"os"
 	"strings"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/velero/pkg/plugin/velero"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/yaml"
 )
 
 var log = logrus.New()
@@ -16,41 +18,19 @@ var log = logrus.New()
 func TestRestorePlugin_Execute(t *testing.T) {
 	plugin := NewRestorePlugin(log)
 
-	// Mock ingress to be restored
-	item := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "networking.k8s.io/v1",
-			"kind":       "Ingress",
-			"metadata": map[string]interface{}{
-				"name": "abav-production-app",
-				"labels": map[string]interface{}{
-					"env": "production",
-				},
-			},
-			"spec": map[string]interface{}{
-				"rules": []interface{}{
-					map[string]interface{}{
-						"host": "production.example.com",
-						"http": map[string]interface{}{
-							"paths": []interface{}{
-								map[string]interface{}{
-									"path": "/",
-									"backend": map[string]interface{}{
-										"service": map[string]interface{}{
-											"name": "production-service",
-											"port": map[string]interface{}{
-												"number": 80,
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+	// Read YAML file
+	yamlFile, err := os.ReadFile("./mock/sample-ingress.yaml")
+	if err != nil {
+		t.Fatalf("Failed to read YAML file: %v", err)
 	}
+
+	// Convert YAML to JSON
+	var itemMap map[string]interface{}
+	if err := yaml.Unmarshal(yamlFile, &itemMap); err != nil {
+		t.Fatalf("Failed to unmarshal YAML: %v", err)
+	}
+
+	item := &unstructured.Unstructured{Object: itemMap}
 
 	input := &velero.RestoreItemActionExecuteInput{
 		Item: item,
