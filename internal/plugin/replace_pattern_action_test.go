@@ -66,4 +66,7 @@ func TestRestorePlugin_Execute(t *testing.T) {
 	// Test validation
 	assert.False(t, strings.Contains(string(jsonData), "production"), "The output JSON should not contain 'production'")
 	assert.True(t, strings.Contains(string(jsonData), "staging"), "The output JSON should contain 'staging'")
+
+	// Print the output JSON
+	t.Log(string(jsonData))
 }
