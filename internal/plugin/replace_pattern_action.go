@@ -50,8 +50,8 @@ func (p *RestorePlugin) Execute(input *velero.RestoreItemActionExecuteInput) (*v
 		return nil, err
 	}
 
-	pattern := "production"
-	replacement := "staging"
+	pattern := "foo-production"
+	replacement := "bar-staging"
 	modifiedString := strings.ReplaceAll(string(jsonData), pattern, replacement)
 
 	// Create a new item from the modified JSON data

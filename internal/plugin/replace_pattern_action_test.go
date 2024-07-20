@@ -44,9 +44,13 @@ func TestRestorePlugin_Execute(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Test validation
-	assert.False(t, strings.Contains(string(jsonData), "production"), "The output JSON should not contain 'production'")
-	assert.True(t, strings.Contains(string(jsonData), "staging"), "The output JSON should contain 'staging'")
+	assert.False(t, strings.Contains(string(jsonData), "foo-production"), "The output JSON should not contain 'production'")
+	assert.True(t, strings.Contains(string(jsonData), "bar-staging"), "The output JSON should contain 'staging'")
 
-	// Print the output JSON
-	t.Log(string(jsonData))
+	// Convert the output item to YAML
+	yamlData, err := yaml.Marshal(output.UpdatedItem)
+	assert.NoError(t, err)
+
+	// Print the output YAML
+	t.Log(string(yamlData))
 }
