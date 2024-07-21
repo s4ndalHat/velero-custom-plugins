@@ -27,16 +27,14 @@ import (
 
 // RestorePlugin is a restore item action plugin for Velero
 type RestorePlugin struct {
-	log logrus.FieldLogger
+	logger logrus.FieldLogger
 }
 
 // NewRestorePlugin instantiates a RestorePlugin.
 func NewRestorePlugin(log logrus.FieldLogger) *RestorePlugin {
-	return &RestorePlugin{log: log}
+	return &RestorePlugin{logger: log}
 }
 
-// AppliesTo returns information about which resources this action should be invoked for.
-// The IncludedResources and ExcludedResources slices can include both resources and resources with group names. These work: "ingresses", "ingresses.extensions".
 // A RestoreItemAction's Execute function will only be invoked on items that match the returned selector. A zero-valued ResourceSelector matches all resources.
 func (p *RestorePlugin) AppliesTo() (velero.ResourceSelector, error) {
 	return velero.ResourceSelector{}, nil

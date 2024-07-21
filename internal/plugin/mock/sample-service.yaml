@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: foo-production-service
+  namespace: default
+  labels:
+    app: foo-production
+spec:
+  selector:
+    app: foo-production
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9376
