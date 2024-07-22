@@ -1,6 +1,6 @@
 # Velero custom plugins
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/WRKT/velero-custom-plugins/CI?label=build)
+[![velero-custom-plugins-test](https://github.com/WRKT/velero-custom-plugins/actions/workflows/test-velero-plugins.yaml/badge.svg?branch=main)](https://github.com/WRKT/velero-custom-plugins/actions/workflows/test-velero-plugins.yaml)
 
 This repository will contain plugins for Velero to solve use case during restoreItemAction.
 
