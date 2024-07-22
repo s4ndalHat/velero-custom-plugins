@@ -48,7 +48,7 @@ func NewRestorePlugin(logger logrus.FieldLogger) *RestorePlugin {
 	if err != nil {
 		logger.Fatalf("Failed to create clientset: %v", err)
 	}
-	configMapClient := clientset.CoreV1().ConfigMaps("your-namespace")
+	configMapClient := clientset.CoreV1().ConfigMaps("velero")
 
 	return &RestorePlugin{
 		logger:          logger,
