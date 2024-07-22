@@ -42,7 +42,8 @@ func (p *RestorePlugin) AppliesTo() (velero.ResourceSelector, error) {
 
 // Execute allows the RestorePlugin to perform arbitrary logic with the item being restored, in this case, setting a custom annotation on the item being restored.
 func (p *RestorePlugin) Execute(input *velero.RestoreItemActionExecuteInput) (*velero.RestoreItemActionExecuteOutput, error) {
-
+	p.logger.Info("Executing CustomRestorePlugin")
+	defer p.logger.Info("Done executing CustomRestorePlugin")
 	jsonData, err := json.Marshal(input.Item)
 	if err != nil {
 		return nil, err
