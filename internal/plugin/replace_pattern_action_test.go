@@ -17,8 +17,15 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const pattern = "example.com"
-const replacement = "replaced.com"
+const (
+	labelSelector = "agoracalyce.io/replace-pattern=RestoreItemAction"
+	pattern1      = "example.com"
+	replacement1  = "replaced.com"
+	pattern2      = "foo"
+	replacement2  = "bar"
+	pattern3      = "production"
+	replacement3  = "review-3"
+)
 
 func TestRestorePlugin_Execute(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -32,12 +39,26 @@ func TestRestorePlugin_Execute(t *testing.T) {
 
 	// Setup expected behavior for the mock
 	mockConfigMapClient.EXPECT().
-		Get(gomock.Any(), "replace-pattern", metav1.GetOptions{}).
-		Return(&corev1.ConfigMap{
-			Data: map[string]string{
-				pattern:      replacement,
-				"foo":        "bar",
-				"production": "review-3",
+		List(gomock.Any(), metav1.ListOptions{
+			LabelSelector: labelSelector,
+		}).
+		Return(&corev1.ConfigMapList{
+			Items: []corev1.ConfigMap{
+				{
+					Data: map[string]string{
+						pattern1: replacement1,
+					},
+				},
+				{
+					Data: map[string]string{
+						pattern2: replacement2,
+					},
+				},
+				{
+					Data: map[string]string{
+						pattern3: replacement3,
+					},
+				},
 			},
 		}, nil)
 
@@ -64,8 +85,8 @@ func TestRestorePlugin_Execute(t *testing.T) {
 	jsonData, err := json.Marshal(output.UpdatedItem)
 	assert.NoError(t, err)
 
-	if !strings.Contains(string(jsonData), replacement) && strings.Contains(string(jsonData), pattern) {
-		t.Errorf("still got %q, want %q", pattern, replacement)
+	if !strings.Contains(string(jsonData), replacement1) || !strings.Contains(string(jsonData), replacement2) || !strings.Contains(string(jsonData), replacement3) {
+		t.Errorf("pattern replacement not found, replacements: %q, %q, %q", replacement1, replacement2, replacement3)
 	}
 
 	yamlData, err := yaml.Marshal(output.UpdatedItem)

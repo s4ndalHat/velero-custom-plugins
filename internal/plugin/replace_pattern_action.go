@@ -66,21 +66,36 @@ func (p *RestorePlugin) Execute(input *velero.RestoreItemActionExecuteInput) (*v
 	p.logger.Info("Executing CustomRestorePlugin")
 	defer p.logger.Info("Done executing CustomRestorePlugin")
 
-	// Fetch patterns from ConfigMap
-	patterns, err := p.getConfigMapData("replace-pattern", "velero")
+	// Fetch patterns from ConfigMaps based on label selector
+	patterns, err := p.getConfigMapDataByLabel("agoracalyce.io/replace-pattern=RestoreItemAction", "velero")
 	if err != nil {
-		return nil, err
+		p.logger.Warnf("No ConfigMap found or error fetching ConfigMap: %v", err)
+		return velero.NewRestoreItemActionExecuteOutput(input.Item), nil // Continue without applying the plugin logic if ConfigMap is not found
 	}
 
 	return replacePatternAction(input, patterns)
 }
 
-func (p *RestorePlugin) getConfigMapData(configMapName, namespace string) (map[string]string, error) {
-	configMap, err := p.configMapClient.Get(context.TODO(), configMapName, metav1.GetOptions{})
+func (p *RestorePlugin) getConfigMapDataByLabel(labelSelector, namespace string) (map[string]string, error) {
+	configMaps, err := p.configMapClient.List(context.TODO(), metav1.ListOptions{
+		LabelSelector: labelSelector,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get configmap: %v", err)
+		return nil, fmt.Errorf("failed to list configmaps: %v", err)
 	}
-	return configMap.Data, nil
+
+	if len(configMaps.Items) == 0 {
+		return nil, fmt.Errorf("no configmap found with label selector: %s", labelSelector)
+	}
+
+	aggregatedPatterns := make(map[string]string)
+	for _, configMap := range configMaps.Items {
+		for key, value := range configMap.Data {
+			aggregatedPatterns[key] = value
+		}
+	}
+
+	return aggregatedPatterns, nil
 }
 
 func replacePatternAction(input *velero.RestoreItemActionExecuteInput, patterns map[string]string) (*velero.RestoreItemActionExecuteOutput, error) {
