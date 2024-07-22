@@ -62,9 +62,9 @@ func TestRestorePlugin_Execute(t *testing.T) {
 	jsonData, err := json.Marshal(output.UpdatedItem)
 	assert.NoError(t, err)
 
-	// Test validation
-	assert.False(t, strings.Contains(string(jsonData), pattern), "The output JSON should not contain ")
-	assert.True(t, strings.Contains(string(jsonData), replacement), "The output JSON should contain ")
+	if !strings.Contains(string(jsonData), replacement) && strings.Contains(string(jsonData), pattern) {
+		t.Errorf("still got %q, want %q", pattern, replacement)
+	}
 
 	yamlData, err := yaml.Marshal(output.UpdatedItem)
 	assert.NoError(t, err)
