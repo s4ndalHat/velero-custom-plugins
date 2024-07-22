@@ -17,6 +17,9 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const pattern = "example.com"
+const replacement = "replaced.com"
+
 func TestRestorePlugin_Execute(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -32,7 +35,7 @@ func TestRestorePlugin_Execute(t *testing.T) {
 		Get(gomock.Any(), "replace-pattern", metav1.GetOptions{}).
 		Return(&corev1.ConfigMap{
 			Data: map[string]string{
-				"foo-production": "bar-staging",
+				pattern: replacement,
 			},
 		}, nil)
 
@@ -60,8 +63,8 @@ func TestRestorePlugin_Execute(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Test validation
-	assert.False(t, strings.Contains(string(jsonData), "foo-production"), "The output JSON should not contain 'production'")
-	assert.True(t, strings.Contains(string(jsonData), "bar-staging"), "The output JSON should contain 'staging'")
+	assert.False(t, strings.Contains(string(jsonData), pattern), "The output JSON should not contain ")
+	assert.True(t, strings.Contains(string(jsonData), replacement), "The output JSON should contain ")
 
 	yamlData, err := yaml.Marshal(output.UpdatedItem)
 	assert.NoError(t, err)
