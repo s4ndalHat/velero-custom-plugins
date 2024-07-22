@@ -13,3 +13,4 @@ spec:
             name: foo-production-svc
             port:
               number: 80
+        pathType: Prefix

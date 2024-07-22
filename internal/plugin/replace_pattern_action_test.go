@@ -6,20 +6,63 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware-tanzu/velero/pkg/plugin/velero"
+	"github.com/wrkt/velero-custom-plugins/mocks"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 )
 
-var log = logrus.New()
+const (
+	labelSelector = "agoracalyce.io/replace-pattern=RestoreItemAction"
+	pattern1      = "example.com"
+	replacement1  = "replaced.com"
+	pattern2      = "foo"
+	replacement2  = "bar"
+	pattern3      = "production"
+	replacement3  = "review-3"
+)
 
 func TestRestorePlugin_Execute(t *testing.T) {
-	plugin := NewRestorePlugin(log)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	// Read YAML file
-	yamlFile, err := os.ReadFile("./mock/sample-ingress.yaml")
+	mockConfigMapClient := mocks.NewMockConfigMapInterface(ctrl)
+	plugin := &RestorePlugin{
+		logger:          logrus.New(),
+		configMapClient: mockConfigMapClient,
+	}
+
+	// Setup expected behavior for the mock
+	mockConfigMapClient.EXPECT().
+		List(gomock.Any(), metav1.ListOptions{
+			LabelSelector: labelSelector,
+		}).
+		Return(&corev1.ConfigMapList{
+			Items: []corev1.ConfigMap{
+				{
+					Data: map[string]string{
+						pattern1: replacement1,
+					},
+				},
+				{
+					Data: map[string]string{
+						pattern2: replacement2,
+					},
+				},
+				{
+					Data: map[string]string{
+						pattern3: replacement3,
+					},
+				},
+			},
+		}, nil)
+
+	yamlFile, err := os.ReadFile("./mock-data/sample-ingress.yaml")
 	if err != nil {
 		t.Fatalf("Failed to read YAML file: %v", err)
 	}
@@ -39,18 +82,17 @@ func TestRestorePlugin_Execute(t *testing.T) {
 	output, err := plugin.Execute(input)
 	assert.NoError(t, err)
 
-	// Convert the output item to JSON
 	jsonData, err := json.Marshal(output.UpdatedItem)
 	assert.NoError(t, err)
 
-	// Test validation
-	assert.False(t, strings.Contains(string(jsonData), "foo-production"), "The output JSON should not contain 'production'")
-	assert.True(t, strings.Contains(string(jsonData), "bar-staging"), "The output JSON should contain 'staging'")
+	if !strings.Contains(string(jsonData), replacement1) || !strings.Contains(string(jsonData), replacement2) || !strings.Contains(string(jsonData), replacement3) {
+		t.Errorf("pattern replacement not found, replacements: %q, %q, %q", replacement1, replacement2, replacement3)
+	}
 
-	// Convert the output item to YAML
 	yamlData, err := yaml.Marshal(output.UpdatedItem)
 	assert.NoError(t, err)
 
 	// Print the output YAML
+	t.Log(string(yamlFile))
 	t.Log(string(yamlData))
 }
