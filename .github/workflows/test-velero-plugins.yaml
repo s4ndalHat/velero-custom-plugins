@@ -2,9 +2,9 @@ name: velero-custom-plugins-test
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
 
 jobs:
   test:
@@ -30,6 +30,15 @@ jobs:
       uses: actions/setup-go@v4
       with:
         go-version: '1.21'
+
+    - name: Install gomock and mockgen
+      run: |
+        go install github.com/golang/mock/mockgen@v1.6.0
+        go install github.com/golang/mock/gomock@v1.6.0
+
+    - name: Generate mock-data
+      run: |
+        mockgen -destination=mocks/mock_configmap_client.go -package=mocks k8s.io/client-go/kubernetes/typed/core/v1 ConfigMapInterface
 
     - name: Build
       run: go build -v ./...
