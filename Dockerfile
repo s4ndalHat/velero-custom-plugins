@@ -24,4 +24,4 @@ FROM scratch
 COPY --from=build /go/bin/velero-custom-plugins /plugins/
 COPY --from=busybox /bin/cp /bin/cp
 USER 65532:65532
-ENTRYPOINT ["cp", "/plugins/velero-custom-plugins", "/target/."]
+ENTRYPOINT ["cp", "/plugins/velero-custom-plugins", "/target/custom-plugins/."]
