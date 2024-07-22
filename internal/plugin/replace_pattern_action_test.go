@@ -35,8 +35,9 @@ func TestRestorePlugin_Execute(t *testing.T) {
 		Get(gomock.Any(), "replace-pattern", metav1.GetOptions{}).
 		Return(&corev1.ConfigMap{
 			Data: map[string]string{
-				pattern: replacement,
-				"foo":   "bar",
+				pattern:      replacement,
+				"foo":        "bar",
+				"production": "review-3",
 			},
 		}, nil)
 
