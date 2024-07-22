@@ -36,6 +36,7 @@ func TestRestorePlugin_Execute(t *testing.T) {
 		Return(&corev1.ConfigMap{
 			Data: map[string]string{
 				pattern: replacement,
+				"foo":   "bar",
 			},
 		}, nil)
 
@@ -70,5 +71,6 @@ func TestRestorePlugin_Execute(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Print the output YAML
+	t.Log(string(yamlFile))
 	t.Log(string(yamlData))
 }
