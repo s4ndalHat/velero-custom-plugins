@@ -23,12 +23,26 @@ This builds an image tagged as `velero/velero-plugin-example:main`. If you want 
 $ IMAGE=your-repo/your-name VERSION=your-version-tag make container 
 ```
 
-## Deploying the plugins
+## Deploying the plugin
 
 To deploy your plugin image to an Velero server:
 
 1. Make sure your image is pushed to a registry that is accessible to your cluster's nodes.
 2. Run `velero plugin add <registry/image:version>`. Example with a dockerhub image: `velero plugin add velero/velero-plugin-example`.
 
-## Using this plugins
-TO_DO
+## Using this plugin
+On the cluster, create a ConfigMap with the label ``agoracalyce.io/replace-pattern: RestoreItemAction`` like below:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: replace-pattern-config
+  namespace: velero
+  labels:
+    velero.io/plugin-config: ""
+    agoracalyce.io/replace-pattern: RestoreItemAction
+data:
+  # Example of pattern mappings
+  old-pattern: new-pattern
+```
