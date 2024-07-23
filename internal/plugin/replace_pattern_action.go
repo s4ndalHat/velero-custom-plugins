@@ -88,6 +88,7 @@ func (p *RestorePlugin) getConfigMapDataByLabel(labelSelector, namespace string)
 		return nil, fmt.Errorf("no configmap found with label selector: %s", labelSelector)
 	}
 
+	// So we can use this plugin simultaneously
 	aggregatedPatterns := make(map[string]string)
 	for _, configMap := range configMaps.Items {
 		for key, value := range configMap.Data {
