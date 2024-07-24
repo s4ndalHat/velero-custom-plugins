@@ -67,7 +67,7 @@ func (p *RestorePlugin) Execute(input *velero.RestoreItemActionExecuteInput) (*v
 	defer p.logger.Info("Done executing CustomRestorePlugin")
 
 	// Fetch patterns from ConfigMaps based on label selector
-	patterns, err := p.getConfigMapDataByLabel("agoracalyce.io/replace-pattern=RestoreItemAction", "velero")
+	patterns, err := p.getConfigMapDataByLabel("agoracalyce.io/replace-pattern=RestoreItemAction")
 	if err != nil {
 		p.logger.Warnf("No ConfigMap found or error fetching ConfigMap: %v", err)
 		return velero.NewRestoreItemActionExecuteOutput(input.Item), nil // Continue without applying the plugin logic if ConfigMap is not found
@@ -76,7 +76,7 @@ func (p *RestorePlugin) Execute(input *velero.RestoreItemActionExecuteInput) (*v
 	return replacePatternAction(p, input, patterns)
 }
 
-func (p *RestorePlugin) getConfigMapDataByLabel(labelSelector, namespace string) (map[string]string, error) {
+func (p *RestorePlugin) getConfigMapDataByLabel(labelSelector string) (map[string]string, error) {
 	configMaps, err := p.configMapClient.List(context.TODO(), metav1.ListOptions{
 		LabelSelector: labelSelector,
 	})
