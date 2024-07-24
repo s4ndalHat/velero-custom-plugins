@@ -73,7 +73,7 @@ func (p *RestorePlugin) Execute(input *velero.RestoreItemActionExecuteInput) (*v
 		return velero.NewRestoreItemActionExecuteOutput(input.Item), nil // Continue without applying the plugin logic if ConfigMap is not found
 	}
 
-	return replacePatternAction(input, patterns)
+	return replacePatternAction(p, input, patterns)
 }
 
 func (p *RestorePlugin) getConfigMapDataByLabel(labelSelector, namespace string) (map[string]string, error) {
@@ -99,7 +99,9 @@ func (p *RestorePlugin) getConfigMapDataByLabel(labelSelector, namespace string)
 	return aggregatedPatterns, nil
 }
 
-func replacePatternAction(input *velero.RestoreItemActionExecuteInput, patterns map[string]string) (*velero.RestoreItemActionExecuteOutput, error) {
+func replacePatternAction(p *RestorePlugin, input *velero.RestoreItemActionExecuteInput, patterns map[string]string) (*velero.RestoreItemActionExecuteOutput, error) {
+	p.logger.Infof("Executing ReplacePatternAction on %v", input.Item.GetObjectKind().GroupVersionKind().Kind)
+
 	jsonData, err := json.Marshal(input.Item)
 	if err != nil {
 		return nil, err
