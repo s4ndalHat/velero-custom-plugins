@@ -100,7 +100,7 @@ func (p *RestorePlugin) getConfigMapDataByLabel(labelSelector, namespace string)
 }
 
 func replacePatternAction(p *RestorePlugin, input *velero.RestoreItemActionExecuteInput, patterns map[string]string) (*velero.RestoreItemActionExecuteOutput, error) {
-	p.logger.Info("Executing ReplacePatternAction on %v", input.Item)
+	p.logger.Infof("Executing ReplacePatternAction on %v", input.Item.GetObjectKind().GroupVersionKind().Kind)
 
 	jsonData, err := json.Marshal(input.Item)
 	if err != nil {
