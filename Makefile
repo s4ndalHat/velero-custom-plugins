@@ -17,7 +17,7 @@ BIN := velero-custom-plugins
 
 REGISTRY ?= harbor.agc.dpk-agc-cl04.agoracalyce.net/velero
 IMAGE    ?= $(REGISTRY)/velero-custom-plugins
-VERSION  ?= 1.0
+VERSION  ?= 1.0-test
 
 GOOS   ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
