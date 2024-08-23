@@ -35,7 +35,6 @@ import (
 type RestorePlugin struct {
 	logger          logrus.FieldLogger
 	configMapClient corev1.ConfigMapInterface
-	restClient      *rest.RESTClient
 }
 
 // NewRestorePlugin instantiates a RestorePlugin.
@@ -53,15 +52,9 @@ func NewRestorePlugin(logger logrus.FieldLogger) *RestorePlugin {
 
 	configMapClient := clientset.CoreV1().ConfigMaps("velero")
 
-	restClient, err := rest.RESTClientFor(config)
-	if err != nil {
-		logger.Fatalf("Failed to create REST client: %v", err)
-	}
-
 	return &RestorePlugin{
 		logger:          logger,
 		configMapClient: configMapClient,
-		restClient:      restClient,
 	}
 }
 
