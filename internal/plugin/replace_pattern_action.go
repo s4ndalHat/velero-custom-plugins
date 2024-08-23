@@ -26,7 +26,6 @@ import (
 	"github.com/vmware-tanzu/velero/pkg/plugin/velero"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
@@ -82,29 +81,7 @@ func (p *RestorePlugin) Execute(input *velero.RestoreItemActionExecuteInput) (*v
 		return velero.NewRestoreItemActionExecuteOutput(input.Item), nil
 	}
 
-	output, err := replacePatternAction(p, input, patterns)
-	if err != nil {
-		return nil, err
-	}
-
-	originalPodName, _, err := unstructured.NestedString(input.Item.UnstructuredContent(), "metadata", "name")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get original pod name: %v", err)
-	}
-
-	newPodName, _, err := unstructured.NestedString(output.UpdatedItem.UnstructuredContent(), "metadata", "name")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get new pod name: %v", err)
-	}
-
-	if originalPodName != newPodName {
-		if err := p.updatePodVolumeRestoreResources("velero", originalPodName, newPodName); err != nil {
-			p.logger.Errorf("Failed to update PodVolumeRestore resources: %v", err)
-			return nil, err
-		}
-	}
-
-	return output, nil
+	return replacePatternAction(p, input, patterns)
 }
 
 func (p *RestorePlugin) getConfigMapDataByLabel(labelSelector string) (map[string]string, error) {
@@ -130,56 +107,13 @@ func (p *RestorePlugin) getConfigMapDataByLabel(labelSelector string) (map[strin
 	return aggregatedPatterns, nil
 }
 
-func (p *RestorePlugin) updatePodVolumeRestoreResources(namespace, originalPodName, newPodName string) error {
-	pvrList := &unstructured.UnstructuredList{}
-	pvrList.SetGroupVersionKind(schema.GroupVersionKind{
-		Group:   "velero.io",
-		Version: "v1",
-		Kind:    "PodVolumeRestoreList",
-	})
-
-	err := p.restClient.Get().
-		Namespace(namespace).
-		Resource("podvolumerestores").
-		Do(context.TODO()).
-		Into(pvrList)
-	if err != nil {
-		return fmt.Errorf("failed to list PodVolumeRestores: %v", err)
-	}
-
-	for _, item := range pvrList.Items {
-		podName, found, err := unstructured.NestedString(item.Object, "spec", "podName")
-		if err != nil || !found {
-			p.logger.Warnf("Failed to get podName from PodVolumeRestore: %v", err)
-			continue
-		}
-
-		if podName == originalPodName {
-			p.logger.Infof("Updating PodVolumeRestore %s to reference new pod name: %s", item.GetName(), newPodName)
-			err := unstructured.SetNestedField(item.Object, newPodName, "spec", "pod", "name")
-			if err != nil {
-				return fmt.Errorf("failed to update PodVolumeRestore resource: %v", err)
-			}
-
-			// Update the resource with the new pod name
-			_, err = p.restClient.Put().
-				Namespace(namespace).
-				Resource("podvolumerestores").
-				Name(item.GetName()).
-				Body(&item).
-				Do(context.TODO()).
-				Get()
-			if err != nil {
-				return fmt.Errorf("failed to update PodVolumeRestore resource: %v", err)
-			}
-		}
-	}
-
-	return nil
-}
-
 func replacePatternAction(p *RestorePlugin, input *velero.RestoreItemActionExecuteInput, patterns map[string]string) (*velero.RestoreItemActionExecuteOutput, error) {
 	p.logger.Infof("Executing ReplacePatternAction on %v", input.Item.GetObjectKind().GroupVersionKind().Kind)
+
+	originalPodName, found, err := unstructured.NestedString(input.Item.UnstructuredContent(), "metadata", "name")
+	if err != nil || !found {
+		return nil, fmt.Errorf("failed to get original pod name: %v", err)
+	}
 
 	jsonData, err := json.Marshal(input.Item)
 	if err != nil {
@@ -191,10 +125,16 @@ func replacePatternAction(p *RestorePlugin, input *velero.RestoreItemActionExecu
 		modifiedString = strings.ReplaceAll(modifiedString, pattern, replacement)
 	}
 
-	// Create a new item from the modified JSON data
 	var modifiedObj unstructured.Unstructured
 	if err := json.Unmarshal([]byte(modifiedString), &modifiedObj); err != nil {
 		return nil, err
 	}
+
+	err = unstructured.SetNestedField(modifiedObj.UnstructuredContent(), originalPodName, "metadata", "name")
+	if err != nil {
+		return nil, fmt.Errorf("failed to set original pod name: %v", err)
+	}
+
+	p.logger.Infof("Pod name remains unchanged: %s", originalPodName)
 	return velero.NewRestoreItemActionExecuteOutput(&modifiedObj), nil
 }
