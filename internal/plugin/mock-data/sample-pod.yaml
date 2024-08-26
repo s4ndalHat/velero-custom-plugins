@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: foo-production-xxxx
+  labels:
+    role: foo-production-xxxx
+spec:
+  containers:
+    - name: foo-production-xxxx
+      image: nginx
+      imagePullPolicy: IfNotPresent
+      ports:
+        - name: foo-production-xxxx
+          containerPort: 80
+          protocol: TCP
+  restartPolicy: Always
+  
