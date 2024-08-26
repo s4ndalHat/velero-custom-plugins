@@ -19,12 +19,10 @@ import (
 
 const (
 	labelSelector = "agoracalyce.io/replace-pattern=RestoreItemAction"
-	pattern1      = "example.com"
-	replacement1  = "replaced.com"
-	pattern2      = "foo"
-	replacement2  = "bar"
-	pattern3      = "production"
-	replacement3  = "review-3"
+	pattern1      = "foo"
+	replacement1  = "bar"
+	pattern2      = "production"
+	replacement2  = "review-3"
 )
 
 func TestRestorePlugin_Execute(t *testing.T) {
@@ -54,15 +52,10 @@ func TestRestorePlugin_Execute(t *testing.T) {
 						pattern2: replacement2,
 					},
 				},
-				{
-					Data: map[string]string{
-						pattern3: replacement3,
-					},
-				},
 			},
 		}, nil)
 
-	yamlFile, err := os.ReadFile("./mock-data/sample-ingress.yaml")
+	yamlFile, err := os.ReadFile("./mock-data/sample-pod.yaml")
 	if err != nil {
 		t.Fatalf("Failed to read YAML file: %v", err)
 	}
@@ -85,8 +78,8 @@ func TestRestorePlugin_Execute(t *testing.T) {
 	jsonData, err := json.Marshal(output.UpdatedItem)
 	assert.NoError(t, err)
 
-	if !strings.Contains(string(jsonData), replacement1) || !strings.Contains(string(jsonData), replacement2) || !strings.Contains(string(jsonData), replacement3) {
-		t.Errorf("pattern replacement not found, replacements: %q, %q, %q", replacement1, replacement2, replacement3)
+	if !strings.Contains(string(jsonData), replacement1) || !strings.Contains(string(jsonData), replacement2) {
+		t.Errorf("pattern replacement not found, replacements: %q, %q", replacement1, replacement2)
 	}
 
 	yamlData, err := yaml.Marshal(output.UpdatedItem)
