@@ -60,9 +60,7 @@ func NewRestorePlugin(logger logrus.FieldLogger) *RestorePlugin {
 
 // AppliesTo returns a ResourceSelector that matches all resources
 func (p *RestorePlugin) AppliesTo() (velero.ResourceSelector, error) {
-	return velero.ResourceSelector{
-		ExcludedResources: []string{"pods", "persistentvolumeclaims"},
-	}, nil
+	return velero.ResourceSelector{}, nil
 }
 
 // Execute allows the RestorePlugin to perform arbitrary logic with the item being restored
