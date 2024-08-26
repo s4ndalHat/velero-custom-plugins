@@ -103,31 +103,46 @@ func (p *RestorePlugin) getConfigMapDataByLabel(labelSelector string) (map[strin
 func replacePatternAction(p *RestorePlugin, input *velero.RestoreItemActionExecuteInput, patterns map[string]string) (*velero.RestoreItemActionExecuteOutput, error) {
 	p.logger.Infof("Executing ReplacePatternAction on %v", input.Item.GetObjectKind().GroupVersionKind().Kind)
 
-	originalPodName, found, err := unstructured.NestedString(input.Item.UnstructuredContent(), "metadata", "name")
-	if err != nil || !found {
-		return nil, fmt.Errorf("failed to get original pod name: %v", err)
+	// Check if the resource is a Pod
+	resourceKind := input.Item.GetObjectKind().GroupVersionKind().Kind
+	var originalPodName string
+
+	if resourceKind == "Pod" {
+		// Get the original pod name to ensure it remains unchanged
+		var found bool
+		var err error
+		originalPodName, found, err = unstructured.NestedString(input.Item.UnstructuredContent(), "metadata", "name")
+		if err != nil || !found {
+			return nil, fmt.Errorf("failed to get original pod name: %v", err)
+		}
 	}
 
+	// Marshal the input item to JSON
 	jsonData, err := json.Marshal(input.Item)
 	if err != nil {
 		return nil, err
 	}
 
+	// Convert JSON to a string for pattern replacement
 	modifiedString := string(jsonData)
 	for pattern, replacement := range patterns {
 		modifiedString = strings.ReplaceAll(modifiedString, pattern, replacement)
 	}
 
+	// Unmarshal the modified string back into an unstructured object
 	var modifiedObj unstructured.Unstructured
 	if err := json.Unmarshal([]byte(modifiedString), &modifiedObj); err != nil {
 		return nil, err
 	}
 
-	err = unstructured.SetNestedField(modifiedObj.UnstructuredContent(), originalPodName, "metadata", "name")
-	if err != nil {
-		return nil, fmt.Errorf("failed to set original pod name: %v", err)
+	// If the resource is a Pod, ensure the pod's original name is preserved
+	if resourceKind == "Pod" {
+		err = unstructured.SetNestedField(modifiedObj.UnstructuredContent(), originalPodName, "metadata", "name")
+		if err != nil {
+			return nil, fmt.Errorf("failed to set original pod name: %v", err)
+		}
+		p.logger.Infof("Pod name remains unchanged: %s", originalPodName)
 	}
 
-	p.logger.Infof("Pod name remains unchanged: %s", originalPodName)
 	return velero.NewRestoreItemActionExecuteOutput(&modifiedObj), nil
 }
