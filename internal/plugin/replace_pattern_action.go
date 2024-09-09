@@ -103,19 +103,16 @@ func (p *RestorePlugin) getConfigMapDataByLabel(labelSelector string) (map[strin
 func replacePatternAction(p *RestorePlugin, input *velero.RestoreItemActionExecuteInput, patterns map[string]string) (*velero.RestoreItemActionExecuteOutput, error) {
 	p.logger.Infof("Executing ReplacePatternAction on %v", input.Item.GetObjectKind().GroupVersionKind().Kind)
 
-	// Marshal the input item to JSON
 	jsonData, err := json.Marshal(input.Item)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert JSON to a string for pattern replacement
 	modifiedString := string(jsonData)
 	for pattern, replacement := range patterns {
 		modifiedString = strings.ReplaceAll(modifiedString, pattern, replacement)
 	}
 
-	// Unmarshal the modified string back into an unstructured object
 	var modifiedObj unstructured.Unstructured
 	if err := json.Unmarshal([]byte(modifiedString), &modifiedObj); err != nil {
 		return nil, err
